@@ -2,7 +2,6 @@ package ru.telishot.playerhealth.mixin.client;
 
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,8 +39,8 @@ public abstract class LivingEntityHealthMixin {
         );
         if (state.nameTag == null && state.distanceToCameraSq < 4096.0) {
             state.nameTag = info.playerhealth$getHpComponent();
-            state.nameTagAttachment = entity.getAttachments()
-                    .getNullable(EntityAttachment.NAME_TAG, 0, entity.getYRot(partialTicks));
+            state.nameTagAttachment = info.playerhealth$findNameTagAttachment(
+                    entity.getAttachments(), 0, entity.getYRot(partialTicks), state.boundingBoxHeight);
         }
     }
 }
