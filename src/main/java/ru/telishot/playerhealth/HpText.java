@@ -28,6 +28,7 @@ public final class HpText {
     public static MutableComponent component(float hp, float max, float absorption) {
         float shown = hp + absorption;
         return Component.literal("\uE000").withStyle(HEART_STYLE)
+                .withStyle(ChatFormatting.RED)
                 .append(Component.literal(" " + format(shown)).withStyle(ChatFormatting.RED));
     }
 
