@@ -20,11 +20,11 @@ import ru.telishot.playerhealth.HealthInfo;
  *
  * <p>Перехватывается ванильный вызов {@code SubmitNodeCollector#submitNameTag}
  * внутри {@code EntityRenderer#submitNameDisplay}: ванильное позиционирование,
- * дистанция, невидимость, скрадывание и подсветка остаются родными, мы лишь
- * отправляем вторую строку со сдвигом вниз. Дополнительная строка добавляется
- * только к настоящему нику ({@code state.nameTag}), а не к счёту под ником и не
- * к случаю, когда HP сам является табличкой для безымянного моба — иначе
- * строка задвоилась бы.
+ * дистанция, скрадывание и подсветка остаются родными, мы лишь отправляем
+ * вторую строку со сдвигом вниз. HP всегда отправляется только в обычном
+ * режиме отрисовки ({@code seeThrough = false}) — сквозь стены текст не
+ * виден, при этом ванильные имена не трогаются. Безымянным мобам HP
+ * становится самой табличкой.
  *
  * <p>Используется только чистый Mixin ({@code @Inject} + {@code @Redirect}),
  * MixinExtras не требуется.
@@ -56,17 +56,26 @@ public abstract class EntityRendererNameTagMixin {
                                           Vec3 attachment, int offset, Component name,
                                           boolean seeThrough, int lightCoords, double distanceToCameraSq,
                                           CameraRenderState camera) {
-        instance.submitNameTag(poseStack, attachment, offset, name, seeThrough, lightCoords, distanceToCameraSq, camera);
-
-        if (playerhealth$currentState instanceof HealthInfo info
-                && info.playerhealth$hasHealthData()
-                && playerhealth$currentState.nameTag == name
-                && playerhealth$currentState.nameTag != info.playerhealth$getHpComponent()) {
-            poseStack.pushPose();
-            poseStack.translate(0.0F, -0.30F, 0.0F);
-            instance.submitNameTag(poseStack, attachment, offset,
-                    info.playerhealth$getHpComponent(), seeThrough, lightCoords, distanceToCameraSq, camera);
-            poseStack.popPose();
+        if (playerhealth$currentState instanceof HealthInfo info && info.playerhealth$hasHealthData()) {
+            Component hpComponent = info.playerhealth$getHpComponent();
+            if (name == hpComponent) {
+                instance.submitNameTag(poseStack, attachment, offset, hpComponent,
+                        false, lightCoords, distanceToCameraSq, camera);
+            } else if (playerhealth$currentState.nameTag == name) {
+                instance.submitNameTag(poseStack, attachment, offset, name,
+                        seeThrough, lightCoords, distanceToCameraSq, camera);
+                poseStack.pushPose();
+                poseStack.translate(0.0F, -0.30F, 0.0F);
+                instance.submitNameTag(poseStack, attachment, offset, hpComponent,
+                        false, lightCoords, distanceToCameraSq, camera);
+                poseStack.popPose();
+            } else {
+                instance.submitNameTag(poseStack, attachment, offset, name,
+                        seeThrough, lightCoords, distanceToCameraSq, camera);
+            }
+            return;
         }
+        instance.submitNameTag(poseStack, attachment, offset, name,
+                seeThrough, lightCoords, distanceToCameraSq, camera);
     }
 }

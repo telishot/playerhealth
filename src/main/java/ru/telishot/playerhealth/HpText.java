@@ -7,38 +7,23 @@ import net.minecraft.ChatFormatting;
  * промежуточных объектов, кроме итоговой строки.
  */
 public final class HpText {
-    private static final char FULL_HEART = '♥';
-    private static final char EMPTY_HEART = '♡';
 
     private HpText() {
     }
 
     /**
-     * Собирает строку вида "♥♥♥♡♡ 8/20": сердца + точное значение HP
-     * (включая поглощение от золотых яблок).
+     * Собирает строку вида "8/20": точное значение HP (включая поглощение
+     * от золотых яблок) и максимальный запас.
      */
     public static String build(float hp, float max, float absorption) {
         float shown = hp + absorption;
-        int maxHearts = Math.max(1, Math.round(max / 2.0f));
-        float perHeart = max / maxHearts;
-
-        int full = (int) Math.min(maxHearts, Math.max(0, shown / perHeart));
-        boolean half = shown - full * perHeart > 0.01f && full < maxHearts;
-        int hearts = Math.min(maxHearts, 10);
-
-        StringBuilder sb = new StringBuilder(hearts + 12);
-        for (int i = 0; i < hearts; i++) {
-            if (i < full) {
-                sb.append(FULL_HEART);
-            } else if (i == full && half) {
-                sb.append(FULL_HEART);
-            } else {
-                sb.append(EMPTY_HEART);
-            }
-        }
-        sb.append(' ');
-        sb.append((int) shown).append('/').append((int) max);
+        StringBuilder sb = new StringBuilder(12);
+        sb.append(format(shown)).append('/').append(format(max));
         return sb.toString();
+    }
+
+    private static String format(float value) {
+        return Integer.toString((int) Math.ceil(value - 1.0e-4f));
     }
 
     /**
