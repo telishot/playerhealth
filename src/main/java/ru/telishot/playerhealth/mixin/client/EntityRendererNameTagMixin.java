@@ -20,17 +20,19 @@ import ru.telishot.playerhealth.HealthInfo;
  *
  * <p>Перехватывается ванильный вызов {@code SubmitNodeCollector#submitNameTag}
  * внутри {@code EntityRenderer#submitNameDisplay}: ванильное позиционирование,
- * дистанция, скрадывание и подсветка остаются родными, мы лишь отправляем
- * вторую строку со сдвигом вниз. HP всегда отправляется только в обычном
- * режиме отрисовки ({@code seeThrough = false}) — сквозь стены текст не
- * виден, при этом ванильные имена не трогаются. Безымянным мобам HP
- * становится самой табличкой.
+ * дистанция, скрадывание и подсветка остаются родными. HP отправляется в
+ * увеличенном масштабе (только обычный режим отрисовки, {@code seeThrough = false} —
+ * сквозь стены текст не виден); ванильные имена не трогаются. Безымянным мобам
+ * HP становится самой табличкой.
  *
  * <p>Используется только чистый Mixin ({@code @Inject} + {@code @Redirect}),
  * MixinExtras не требуется.
  */
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererNameTagMixin {
+
+    @Unique
+    private static final float playerhealth$HP_SCALE = 1.5F;
 
     @Unique
     private EntityRenderState playerhealth$currentState;
@@ -59,16 +61,13 @@ public abstract class EntityRendererNameTagMixin {
         if (playerhealth$currentState instanceof HealthInfo info && info.playerhealth$hasHealthData()) {
             Component hpComponent = info.playerhealth$getHpComponent();
             if (name == hpComponent) {
-                instance.submitNameTag(poseStack, attachment, offset, hpComponent,
-                        false, lightCoords, distanceToCameraSq, camera);
+                playerhealth$submitScaled(instance, poseStack, attachment, offset, 0.0F, hpComponent,
+                        lightCoords, distanceToCameraSq, camera);
             } else if (playerhealth$currentState.nameTag == name) {
                 instance.submitNameTag(poseStack, attachment, offset, name,
                         seeThrough, lightCoords, distanceToCameraSq, camera);
-                poseStack.pushPose();
-                poseStack.translate(0.0F, -0.30F, 0.0F);
-                instance.submitNameTag(poseStack, attachment, offset, hpComponent,
-                        false, lightCoords, distanceToCameraSq, camera);
-                poseStack.popPose();
+                playerhealth$submitScaled(instance, poseStack, attachment, offset, 0.35F, hpComponent,
+                        lightCoords, distanceToCameraSq, camera);
             } else {
                 instance.submitNameTag(poseStack, attachment, offset, name,
                         seeThrough, lightCoords, distanceToCameraSq, camera);
@@ -77,5 +76,35 @@ public abstract class EntityRendererNameTagMixin {
         }
         instance.submitNameTag(poseStack, attachment, offset, name,
                 seeThrough, lightCoords, distanceToCameraSq, camera);
+    }
+
+    /**
+     * Отправляет текст HP в увеличенном масштабе. Ваниль применяется к табличке
+     * смещение к точке крепления и масштаб 0.025 внутри себя, поэтому точку
+     * крепления и вертикальный сдвиг компенсируем заранее: точка привязки
+     * остаётся на ванильном месте, растёт только сам текст.
+     */
+    @Unique
+    private static void playerhealth$submitScaled(SubmitNodeCollector collector, PoseStack poseStack,
+                                                  Vec3 attachment, int offset, float drop, Component text,
+                                                  int lightCoords, double distanceToCameraSq,
+                                                  CameraRenderState camera) {
+        if (attachment == null) {
+            return;
+        }
+        float scale = playerhealth$HP_SCALE;
+        float anchorX = (float) attachment.x;
+        float anchorY = (float) attachment.y + 0.5F;
+        float anchorZ = (float) attachment.z;
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, scale);
+        poseStack.translate(
+                anchorX / scale - anchorX,
+                (anchorY - drop) / scale - anchorY,
+                anchorZ / scale - anchorZ
+        );
+        collector.submitNameTag(poseStack, attachment, offset, text,
+                false, lightCoords, distanceToCameraSq, camera);
+        poseStack.popPose();
     }
 }

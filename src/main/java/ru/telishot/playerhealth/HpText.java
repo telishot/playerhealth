@@ -1,25 +1,28 @@
 package ru.telishot.playerhealth;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /**
  * Формирование текста HP. Чистые функции без состояния и без аллокаций
- * промежуточных объектов, кроме итоговой строки.
+ * промежуточных объектов, кроме итоговой строки и Component.
  */
 public final class HpText {
+
+    private static final String HEART = "\u2665";
 
     private HpText() {
     }
 
     /**
-     * Собирает строку вида "8/20": точное значение HP (включая поглощение
-     * от золотых яблок) и максимальный запас.
+     * Собирает метку вида "♥ 12": красное сердце и точное значение HP
+     * (включая поглощение от золотых яблок), число окрашивается по доле здоровья.
      */
-    public static String build(float hp, float max, float absorption) {
+    public static MutableComponent component(float hp, float max, float absorption) {
         float shown = hp + absorption;
-        StringBuilder sb = new StringBuilder(12);
-        sb.append(format(shown)).append('/').append(format(max));
-        return sb.toString();
+        return Component.literal(HEART).withStyle(ChatFormatting.RED)
+                .append(Component.literal(" " + format(shown)).withStyle(color(hp, max, absorption)));
     }
 
     private static String format(float value) {
@@ -27,7 +30,7 @@ public final class HpText {
     }
 
     /**
-     * Цвет текста в зависимости от доли здоровья: зелёный → жёлтый → красный.
+     * Цвет числа в зависимости от доли здоровья: зелёный → жёлтый → красный.
      */
     public static ChatFormatting color(float hp, float max, float absorption) {
         float fraction = (hp + absorption) / Math.max(1.0f, max);

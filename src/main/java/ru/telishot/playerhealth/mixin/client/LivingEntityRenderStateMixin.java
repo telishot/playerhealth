@@ -46,9 +46,7 @@ public abstract class LivingEntityRenderStateMixin implements HealthInfo {
             return;
         }
 
-        playerhealth$component = Component.literal(
-                HpText.build(hp, max, absorption)
-        ).withStyle(HpText.color(hp, max, absorption));
+        playerhealth$component = HpText.component(hp, max, absorption);
         playerhealth$lastHp = hp;
         playerhealth$lastMax = max;
         playerhealth$lastAbsorption = absorption;
