@@ -3,7 +3,6 @@ package ru.telishot.playerhealth.mixin.client;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -11,11 +10,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ru.telishot.playerhealth.HealthInfo;
 
 /**
- * Извлекает HP игрока в render state один раз за кадр (на этапе extraction),
- * а не на пути рендера отрисовки.
+ * Извлекает HP любого живого существа (игроки и мобы) в render state один раз
+ * за кадр (на этапе extraction), а не на пути рендера отрисовки.
  */
 @Mixin(LivingEntityRenderer.class)
-public abstract class PlayerRendererMixin {
+public abstract class LivingEntityHealthMixin {
 
     @Inject(
             method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V",
@@ -23,16 +22,15 @@ public abstract class PlayerRendererMixin {
     )
     private void playerhealth$extractHealth(LivingEntity entity, LivingEntityRenderState state,
                                             float partialTicks, CallbackInfo ci) {
-        if (!(entity instanceof Player player) || !(state instanceof HealthInfo info)) {
-            return;
-        }
-        if (player.isRemoved() || player.isSpectator()) {
+        if (!(state instanceof HealthInfo info)
+                || entity.isRemoved()
+                || entity.isSpectator()) {
             return;
         }
         info.playerhealth$setHealthData(
-                player.getHealth(),
-                player.getMaxHealth(),
-                player.getAbsorptionAmount()
+                entity.getHealth(),
+                entity.getMaxHealth(),
+                entity.getAbsorptionAmount()
         );
     }
 }
