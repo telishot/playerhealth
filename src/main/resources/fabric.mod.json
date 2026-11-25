@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "playerhealth",
+  "version": "${version}",
+  "name": "Player Health Tags",
+  "description": "Показывает здоровье (HP) других игроков над их головами.",
+  "authors": ["telishot"],
+  "license": "MIT",
+  "environment": "client",
+  "mixins": [
+    {
+      "config": "playerhealth.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": ">=26.1 <26.2",
+    "java": ">=25"
+  }
+}
