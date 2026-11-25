@@ -53,7 +53,7 @@ gradle build
 
 ## Как это работает
 
-- `LivingEntityHealthMixin` — на этапе `extractRenderState` записывает HP всех живых существ
+- `LivingEntityHealthMixin` — на этапе `extractRenderState` записывает HP всех живых существ; для безымянных мобов HP сам становится табличкой (дистанция, команды и невидимость — ванильные)
   в его render state.
 - `LivingEntityRenderStateMixin` — duck-интерфейс: хранит HP, максимум и
   кэшированный `Component` с текстом.

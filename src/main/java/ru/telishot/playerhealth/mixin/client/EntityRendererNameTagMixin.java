@@ -21,7 +21,10 @@ import ru.telishot.playerhealth.HealthInfo;
  * <p>Перехватывается ванильный вызов {@code SubmitNodeCollector#submitNameTag}
  * внутри {@code EntityRenderer#submitNameDisplay}: ванильное позиционирование,
  * дистанция, невидимость, скрадывание и подсветка остаются родными, мы лишь
- * отправляем вторую строку со сдвигом вниз.
+ * отправляем вторую строку со сдвигом вниз. Дополнительная строка добавляется
+ * только к настоящему нику ({@code state.nameTag}), а не к счёту под ником и не
+ * к случаю, когда HP сам является табличкой для безымянного моба — иначе
+ * строка задвоилась бы.
  *
  * <p>Используется только чистый Mixin ({@code @Inject} + {@code @Redirect}),
  * MixinExtras не требуется.
@@ -38,7 +41,7 @@ public abstract class EntityRendererNameTagMixin {
     )
     private void playerhealth$captureState(EntityRenderState state, PoseStack poseStack,
                                            SubmitNodeCollector collector, CameraRenderState camera,
-                                           int light, CallbackInfo ci) {
+                                           int offset, CallbackInfo ci) {
         playerhealth$currentState = state;
     }
 
@@ -51,16 +54,18 @@ public abstract class EntityRendererNameTagMixin {
     )
     private void playerhealth$submitHpTag(SubmitNodeCollector instance, PoseStack poseStack,
                                           Vec3 attachment, int offset, Component name,
-                                          boolean seeThrough, int background, double light,
+                                          boolean seeThrough, int lightCoords, double distanceToCameraSq,
                                           CameraRenderState camera) {
-        instance.submitNameTag(poseStack, attachment, offset, name, seeThrough, background, light, camera);
+        instance.submitNameTag(poseStack, attachment, offset, name, seeThrough, lightCoords, distanceToCameraSq, camera);
 
         if (playerhealth$currentState instanceof HealthInfo info
-                && info.playerhealth$hasHealthData()) {
+                && info.playerhealth$hasHealthData()
+                && playerhealth$currentState.nameTag == name
+                && playerhealth$currentState.nameTag != info.playerhealth$getHpComponent()) {
             poseStack.pushPose();
             poseStack.translate(0.0F, -0.30F, 0.0F);
             instance.submitNameTag(poseStack, attachment, offset,
-                    info.playerhealth$getHpComponent(), seeThrough, background, light, camera);
+                    info.playerhealth$getHpComponent(), seeThrough, lightCoords, distanceToCameraSq, camera);
             poseStack.popPose();
         }
     }
