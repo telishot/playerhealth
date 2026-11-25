@@ -19,20 +19,25 @@ import ru.telishot.playerhealth.HealthInfo;
  * Рисует строку HP под обычной табличкой с ником игрока.
  *
  * <p>Перехватывается ванильный вызов {@code SubmitNodeCollector#submitNameTag}
- * внутри {@code EntityRenderer#submitNameDisplay}: ванильное позиционирование,
- * дистанция, скрадывание и подсветка остаются родными. HP отправляется в
- * увеличенном масштабе (только обычный режим отрисовки, {@code seeThrough = false} —
- * сквозь стены текст не виден); ванильные имена не трогаются. Безымянным мобам
- * HP становится самой табличкой.
+ * внутри {@code EntityRenderer#submitNameDisplay}: позиционирование, дистанция,
+ * скрадывание и подсветка остаются родными. И ник, и строка HP принудительно
+ * отправляются с {@code seeThrough = false} (ваниль по умолчанию рисует таблички
+ * в see-through слое — они просвечивают сквозь стены); строка HP отправляется в
+ * увеличенном масштабе ({@code seeThrough = false} — сквозь стены текст не виден).
+ * Безымянным мобам HP становится самой табличкой.
  *
  * <p>Используется только чистый Mixin ({@code @Inject} + {@code @Redirect}),
- * MixinExtras не требуется.
+ * MixinExtras не требуется. Строка HP рисуется в целочисленном масштабе 2x
+ * относительно ванильных табличек: дробный масштаб размывает пиксели глифа,
+ * а целочисленный даёт чёткие края. Под niком строка HP опускается на 0.55
+ * (в масштабированных координатах — по высоте ванильной строки), чтобы
+ * фоновые плашки табличек не накладывались друг на друга.
  */
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererNameTagMixin {
 
     @Unique
-    private static final float playerhealth$HP_SCALE = 1.5F;
+    private static final float playerhealth$HP_SCALE = 2.0F;
 
     @Unique
     private EntityRenderState playerhealth$currentState;
@@ -65,12 +70,12 @@ public abstract class EntityRendererNameTagMixin {
                         lightCoords, distanceToCameraSq, camera);
             } else if (playerhealth$currentState.nameTag == name) {
                 instance.submitNameTag(poseStack, attachment, offset, name,
-                        seeThrough, lightCoords, distanceToCameraSq, camera);
-                playerhealth$submitScaled(instance, poseStack, attachment, offset, 0.35F, hpComponent,
+                        false, lightCoords, distanceToCameraSq, camera);
+                playerhealth$submitScaled(instance, poseStack, attachment, offset, 0.55F, hpComponent,
                         lightCoords, distanceToCameraSq, camera);
             } else {
                 instance.submitNameTag(poseStack, attachment, offset, name,
-                        seeThrough, lightCoords, distanceToCameraSq, camera);
+                        false, lightCoords, distanceToCameraSq, camera);
             }
             return;
         }

@@ -2,7 +2,10 @@ package ru.telishot.playerhealth;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
 
 /**
  * Формирование текста HP. Чистые функции без состояния и без аллокаций
@@ -10,36 +13,26 @@ import net.minecraft.network.chat.MutableComponent;
  */
 public final class HpText {
 
-    private static final String HEART = "\u2665";
+    private static final Style HEART_STYLE = Style.EMPTY.withFont(new FontDescription.Resource(
+            Identifier.fromNamespaceAndPath("playerhealth", "heart")));
 
     private HpText() {
     }
 
     /**
-     * Собирает метку вида "♥ 12": красное сердце и точное значение HP
-     * (включая поглощение от золотых яблок), число окрашивается по доле здоровья.
+     * Собирает метку в виде ванильного сердечка и точного значения HP
+     * (включая поглощение от золотых яблок). Число всегда красное и не
+     * зависит от доли здоровья; сердечко рисуется глифом собственного
+     * шрифта {@code playerhealth:heart} в стиле ванильного HUD-сердца.
      */
     public static MutableComponent component(float hp, float max, float absorption) {
         float shown = hp + absorption;
-        return Component.literal(HEART).withStyle(ChatFormatting.RED)
-                .append(Component.literal(" " + format(shown)).withStyle(color(hp, max, absorption)));
+        return Component.literal("\uE000").withStyle(HEART_STYLE)
+                .withStyle(ChatFormatting.RED)
+                .append(Component.literal(" " + format(shown)).withStyle(ChatFormatting.RED));
     }
 
     private static String format(float value) {
         return Integer.toString((int) Math.ceil(value - 1.0e-4f));
-    }
-
-    /**
-     * Цвет числа в зависимости от доли здоровья: зелёный → жёлтый → красный.
-     */
-    public static ChatFormatting color(float hp, float max, float absorption) {
-        float fraction = (hp + absorption) / Math.max(1.0f, max);
-        if (fraction > 0.5f) {
-            return ChatFormatting.GREEN;
-        }
-        if (fraction > 0.25f) {
-            return ChatFormatting.YELLOW;
-        }
-        return ChatFormatting.RED;
     }
 }
